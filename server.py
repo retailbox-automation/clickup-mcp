@@ -1,26 +1,16 @@
 """
-ClickUp MCP Server
+ClickUp MCP Server (stdio transport for local use)
 
 A Model Context Protocol server that enables LLMs to interact with ClickUp workspaces,
-spaces, lists, and custom fields.
-
-Features:
-- List workspaces (teams)
-- Get spaces in a workspace
-- View space details with folders and lists
-- Get custom fields for lists
-- View tasks and their custom field values
+spaces, lists, and custom fields. Uses stdio transport for Claude Desktop integration.
 """
 
 import os
-import json
 from typing import Any, Optional
 from urllib.parse import urljoin
 
 import httpx
-from mcp.server import Server
-from mcp.types import Tool, TextContent
-from pydantic import BaseModel, Field, ConfigDict
+from fastmcp import FastMCP
 
 
 # Constants
@@ -28,53 +18,8 @@ API_BASE_URL = "https://api.clickup.com/api/v2"
 CHARACTER_LIMIT = 25000
 
 
-# Initialize MCP server
-mcp = Server("clickup-mcp-server")
-
-
-# Pydantic Models for Input Validation
-class GetSpacesInput(BaseModel):
-    """Input for getting spaces in a workspace."""
-    model_config = ConfigDict(strict=True)
-
-    team_id: str = Field(
-        description="The workspace (team) ID. Example: '9012345678'"
-    )
-    archived: bool = Field(
-        default=False,
-        description="Include archived spaces. Default: false"
-    )
-
-
-class GetSpaceDetailsInput(BaseModel):
-    """Input for getting detailed information about a specific space."""
-    model_config = ConfigDict(strict=True)
-
-    space_id: str = Field(
-        description="The space ID. Example: '90120012345'"
-    )
-
-
-class GetListCustomFieldsInput(BaseModel):
-    """Input for getting custom fields for a list."""
-    model_config = ConfigDict(strict=True)
-
-    list_id: str = Field(
-        description="The list ID. Example: '901200567890'"
-    )
-
-
-class GetFolderlessListsInput(BaseModel):
-    """Input for getting folderless lists in a space."""
-    model_config = ConfigDict(strict=True)
-
-    space_id: str = Field(
-        description="The space ID. Example: '90120012345'"
-    )
-    archived: bool = Field(
-        default=False,
-        description="Include archived lists. Default: false"
-    )
+# Initialize FastMCP server
+mcp = FastMCP("clickup-mcp-server")
 
 
 # API Client Helper Functions
@@ -264,12 +209,7 @@ def format_custom_fields(fields: list[dict]) -> str:
 
 
 # MCP Tools
-@mcp.tool(
-    annotations={
-        "readOnlyHint": True,
-        "openWorldHint": True
-    }
-)
+@mcp.tool()
 async def get_authorized_user() -> str:
     """
     Get information about the currently authenticated ClickUp user.
@@ -316,12 +256,7 @@ async def get_authorized_user() -> str:
         return f"Error getting user information: {str(e)}"
 
 
-@mcp.tool(
-    annotations={
-        "readOnlyHint": True,
-        "openWorldHint": True
-    }
-)
+@mcp.tool()
 async def get_spaces(team_id: str, archived: bool = False) -> str:
     """
     Get all spaces in a ClickUp workspace (team).
@@ -359,12 +294,7 @@ async def get_spaces(team_id: str, archived: bool = False) -> str:
         return f"Error getting spaces: {str(e)}"
 
 
-@mcp.tool(
-    annotations={
-        "readOnlyHint": True,
-        "openWorldHint": True
-    }
-)
+@mcp.tool()
 async def get_space_details(space_id: str) -> str:
     """
     Get detailed information about a specific ClickUp space.
@@ -402,12 +332,7 @@ async def get_space_details(space_id: str) -> str:
         return f"Error getting space details: {str(e)}"
 
 
-@mcp.tool(
-    annotations={
-        "readOnlyHint": True,
-        "openWorldHint": True
-    }
-)
+@mcp.tool()
 async def get_list_custom_fields(list_id: str) -> str:
     """
     Get all custom fields (columns) configured for a specific list.
@@ -454,12 +379,7 @@ async def get_list_custom_fields(list_id: str) -> str:
         return f"Error getting custom fields: {str(e)}"
 
 
-@mcp.tool(
-    annotations={
-        "readOnlyHint": True,
-        "openWorldHint": True
-    }
-)
+@mcp.tool()
 async def get_folderless_lists(space_id: str, archived: bool = False) -> str:
     """
     Get all lists that are not inside folders in a space.
@@ -513,17 +433,6 @@ async def get_folderless_lists(space_id: str, archived: bool = False) -> str:
         return f"Error getting folderless lists: {str(e)}"
 
 
-# Run the server
+# Run the server with stdio transport (for Claude Desktop)
 if __name__ == "__main__":
-    import asyncio
-    import mcp.server.stdio
-
-    async def main():
-        async with mcp.server.stdio.stdio_server() as (read_stream, write_stream):
-            await mcp.run(
-                read_stream,
-                write_stream,
-                mcp.create_initialization_options()
-            )
-
-    asyncio.run(main())
+    mcp.run(transport="stdio")

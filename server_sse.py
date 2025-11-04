@@ -6,16 +6,11 @@ Designed to work with Web Claude and can be deployed on platforms like Zeabur.
 """
 
 import os
-import json
 from typing import Any, Optional
 from urllib.parse import urljoin
 
 import httpx
-from mcp.server import Server
-from mcp.server.sse import SseServerTransport
-from starlette.applications import Starlette
-from starlette.routing import Mount, Route
-from starlette.responses import Response
+from fastmcp import FastMCP
 from pydantic import BaseModel, Field, ConfigDict
 
 
@@ -24,53 +19,8 @@ API_BASE_URL = "https://api.clickup.com/api/v2"
 CHARACTER_LIMIT = 25000
 
 
-# Initialize MCP server
-mcp = Server("clickup-mcp-server")
-
-
-# Pydantic Models for Input Validation
-class GetSpacesInput(BaseModel):
-    """Input for getting spaces in a workspace."""
-    model_config = ConfigDict(strict=True)
-
-    team_id: str = Field(
-        description="The workspace (team) ID. Example: '9012345678'"
-    )
-    archived: bool = Field(
-        default=False,
-        description="Include archived spaces. Default: false"
-    )
-
-
-class GetSpaceDetailsInput(BaseModel):
-    """Input for getting detailed information about a specific space."""
-    model_config = ConfigDict(strict=True)
-
-    space_id: str = Field(
-        description="The space ID. Example: '90120012345'"
-    )
-
-
-class GetListCustomFieldsInput(BaseModel):
-    """Input for getting custom fields for a list."""
-    model_config = ConfigDict(strict=True)
-
-    list_id: str = Field(
-        description="The list ID. Example: '901200567890'"
-    )
-
-
-class GetFolderlessListsInput(BaseModel):
-    """Input for getting folderless lists in a space."""
-    model_config = ConfigDict(strict=True)
-
-    space_id: str = Field(
-        description="The space ID. Example: '90120012345'"
-    )
-    archived: bool = Field(
-        default=False,
-        description="Include archived lists. Default: false"
-    )
+# Initialize FastMCP server
+mcp = FastMCP("clickup-mcp-server")
 
 
 # API Client Helper Functions
@@ -260,12 +210,7 @@ def format_custom_fields(fields: list[dict]) -> str:
 
 
 # MCP Tools
-@mcp.tool(
-    annotations={
-        "readOnlyHint": True,
-        "openWorldHint": True
-    }
-)
+@mcp.tool()
 async def get_authorized_user() -> str:
     """
     Get information about the currently authenticated ClickUp user.
@@ -312,12 +257,7 @@ async def get_authorized_user() -> str:
         return f"Error getting user information: {str(e)}"
 
 
-@mcp.tool(
-    annotations={
-        "readOnlyHint": True,
-        "openWorldHint": True
-    }
-)
+@mcp.tool()
 async def get_spaces(team_id: str, archived: bool = False) -> str:
     """
     Get all spaces in a ClickUp workspace (team).
@@ -355,12 +295,7 @@ async def get_spaces(team_id: str, archived: bool = False) -> str:
         return f"Error getting spaces: {str(e)}"
 
 
-@mcp.tool(
-    annotations={
-        "readOnlyHint": True,
-        "openWorldHint": True
-    }
-)
+@mcp.tool()
 async def get_space_details(space_id: str) -> str:
     """
     Get detailed information about a specific ClickUp space.
@@ -398,12 +333,7 @@ async def get_space_details(space_id: str) -> str:
         return f"Error getting space details: {str(e)}"
 
 
-@mcp.tool(
-    annotations={
-        "readOnlyHint": True,
-        "openWorldHint": True
-    }
-)
+@mcp.tool()
 async def get_list_custom_fields(list_id: str) -> str:
     """
     Get all custom fields (columns) configured for a specific list.
@@ -450,12 +380,7 @@ async def get_list_custom_fields(list_id: str) -> str:
         return f"Error getting custom fields: {str(e)}"
 
 
-@mcp.tool(
-    annotations={
-        "readOnlyHint": True,
-        "openWorldHint": True
-    }
-)
+@mcp.tool()
 async def get_folderless_lists(space_id: str, archived: bool = False) -> str:
     """
     Get all lists that are not inside folders in a space.
@@ -509,24 +434,11 @@ async def get_folderless_lists(space_id: str, archived: bool = False) -> str:
         return f"Error getting folderless lists: {str(e)}"
 
 
-# Starlette app for SSE transport
-app = Starlette(
-    debug=True,
-    routes=[
-        Route("/health", lambda request: Response("OK")),
-        Mount("/mcp/v1", app=SseServerTransport("/messages").get_asgi_app(mcp)),
-    ],
-)
-
-
-# Run with uvicorn
+# Run with uvicorn for SSE transport
 if __name__ == "__main__":
     import uvicorn
 
     port = int(os.getenv("PORT", "8000"))
-    uvicorn.run(
-        app,
-        host="0.0.0.0",
-        port=port,
-        log_level="info"
-    )
+
+    # FastMCP automatically handles SSE transport
+    mcp.run(transport="sse", port=port, host="0.0.0.0")
