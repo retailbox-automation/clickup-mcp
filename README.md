@@ -321,36 +321,18 @@ For issues related to:
 - **Data Migration**: Audit source data before migration projects
 - **API Testing**: Validate ClickUp API responses and permissions
 
-## 💰 Monetization & Business Model
+## 💼 Commercial Use
 
-This MCP server is **open source (MIT)** and free to use. However, it can be monetized:
+This MCP server is **open source (MIT)** and free for both personal and commercial use.
 
-### Potential Models
+- ✅ Use for client projects
+- ✅ Integrate into your consulting services
+- ✅ Deploy for your organization
+- ✅ Modify and customize
 
-**1. Freemium SaaS**
-- Free tier: 50 API calls/day, basic 5 tools
-- Pro tier ($20/month): Unlimited calls, all 9 tools, priority support
-- Enterprise ($300/month): Multi-workspace, white-label, SLA
+**Hosted Instance**: `https://clickupmcp.zeabur.app/mcp` (free during beta)
 
-**2. Consulting Service**
-- Offer ClickUp audit services using this tool
-- One-time audits: $500-2,000 per client
-- Ongoing optimization: $200-500/month retainer
-
-**3. Agency White-Label**
-- License to agencies for $99-299/month
-- Rebrand and resell to their clients
-- Custom deployment support
-
-**4. FastMCP Cloud Marketplace** (Coming)
-- List on FastMCP Cloud directory
-- Usage-based pricing ($0.01/call)
-- Managed infrastructure
-
-### Current Status
-✅ **Free & open source** - deployed at `https://clickupmcp.zeabur.app/mcp`
-⏳ **Premium tiers** - Coming soon
-🔮 **Enterprise support** - Available on request
+For **enterprise support** or **custom deployments**, open an issue on GitHub.
 
 ## 🐳 Docker Support
 
