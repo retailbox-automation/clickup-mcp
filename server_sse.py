@@ -61,7 +61,7 @@ async def make_api_request(
         httpx.HTTPStatusError: For other HTTP errors
     """
     api_key = get_api_key()
-    url = urljoin(API_BASE_URL, endpoint.lstrip("/"))
+    url = urljoin(API_BASE_URL + "/", endpoint.lstrip("/"))
 
     headers = {
         "Authorization": api_key,
