@@ -1,0 +1,46 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-10-17/server.schema.json",
+  "name": "io.github.retailbox-automation/clickup-mcp",
+  "title": "ClickUp MCP Server",
+  "description": "Model Context Protocol server for ClickUp workspace auditing and automation. Enables LLMs to analyze spaces, folders, lists, custom fields, tasks, and views for optimization recommendations.",
+  "version": "1.0.0",
+  "websiteUrl": "https://github.com/retailbox-automation/clickup-mcp",
+  "repository": {
+    "url": "https://github.com/retailbox-automation/clickup-mcp.git",
+    "source": "github",
+    "id": "retailbox-automation/clickup-mcp"
+  },
+  "packages": [
+    {
+      "registryType": "pypi",
+      "identifier": "clickup-mcp-server",
+      "transport": "stdio",
+      "runtimeHint": "python",
+      "packageArguments": [
+        "-m",
+        "server"
+      ],
+      "environmentVariables": {
+        "CLICKUP_API_KEY": {
+          "required": true,
+          "description": "Your ClickUp Personal API Token. Get it from: https://app.clickup.com/settings/apps"
+        }
+      }
+    }
+  ],
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://clickupmcp.zeabur.app/mcp",
+      "description": "Official hosted instance (requires CLICKUP_API_KEY configured on server)"
+    }
+  ],
+  "_meta": {
+    "io.modelcontextprotocol.registry/publisher-provided": {
+      "category": "productivity",
+      "tags": ["clickup", "project-management", "workspace-audit", "automation", "custom-fields"],
+      "author": "Retail Box Automation",
+      "support": "https://github.com/retailbox-automation/clickup-mcp/issues"
+    }
+  }
+}

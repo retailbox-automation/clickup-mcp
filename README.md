@@ -1,28 +1,82 @@
 # ClickUp MCP Server
 
-A Model Context Protocol (MCP) server that enables LLMs to interact with ClickUp workspaces, spaces, lists, and custom fields.
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
+[![FastMCP](https://img.shields.io/badge/FastMCP-2.13+-green.svg)](https://gofastmcp.com)
+[![MCP Protocol](https://img.shields.io/badge/MCP-2024--11--05-purple.svg)](https://modelcontextprotocol.io)
 
-## Features
+A production-ready Model Context Protocol (MCP) server that enables LLMs to perform comprehensive audits of ClickUp workspaces. Built with FastMCP for optimal performance and developer experience.
 
-🔍 **Workspace Discovery**
-- Get authenticated user information and workspace access
-- List all available workspaces (teams)
+## 🎯 Purpose
 
-📂 **Space Management**
-- List all spaces in a workspace
-- Get detailed space information including folders and lists
-- View space status configurations
+Enable AI assistants (Claude, ChatGPT, etc.) to:
+- Audit complete ClickUp workspace structures
+- Analyze custom fields and data models
+- Review task organization and workflows
+- Discover views and dashboards
+- Generate optimization recommendations
 
-📋 **List Operations**
-- Get folderless lists in a space
-- View list details and task counts
+Perfect for **consultants**, **automation specialists**, and **productivity coaches** who need to analyze client ClickUp setups.
 
-🎨 **Custom Fields**
-- Retrieve custom fields (columns) for any list
-- View field types, configurations, and requirements
-- Supports 16+ field types (text, number, dropdown, date, etc.)
+## ✨ Features
 
-## Deployment Options
+### 🔍 Workspace Discovery (3 tools)
+- `get_authorized_user` - User profile and workspace memberships
+- `get_spaces` - List all spaces in a workspace
+- `get_space_details` - Detailed space information
+
+### 📁 Structure Analysis (2 tools)
+- `get_folders` - **Complete folder hierarchy with lists and task counts**
+- `get_folderless_lists` - Lists not organized in folders
+
+### 📋 List & Field Audit (2 tools)
+- `get_list_details` - **Comprehensive list analysis with custom fields, statuses, priorities**
+- `get_list_custom_fields` - Detailed custom field configuration
+
+### 📊 Data & Views (2 tools)
+- `get_tasks` - **Sample task data with custom field values (pagination)**
+- `get_views` - **Views and dashboards discovery (Board, List, Calendar, Gantt, Dashboard)**
+
+**Total: 9 powerful tools** for complete workspace audit and analysis.
+
+## 🚀 Quick Start
+
+### Remote (Web Claude, Claude Desktop)
+
+Use our hosted instance - no installation required!
+
+```json
+{
+  "mcpServers": {
+    "clickup": {
+      "url": "https://clickupmcp.zeabur.app/mcp"
+    }
+  }
+}
+```
+
+**Note**: You need to configure `CLICKUP_API_KEY` on the server. For private deployments, see below.
+
+### Local Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/retailbox-automation/clickup-mcp.git
+cd clickup-mcp
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Set your API key
+export CLICKUP_API_KEY="pk_your_token_here"
+
+# Run locally
+python server.py
+```
+
+---
+
+## 🌐 Deployment Options
 
 ### Option 1: Remote SSE Server (for Web Claude)
 
@@ -248,17 +302,108 @@ For issues related to:
 - **MCP Protocol**: [Model Context Protocol](https://modelcontextprotocol.io)
 - **This Server**: Open an issue in the repository
 
-## Roadmap
+## 📈 Use Cases
 
-Future enhancements:
-- [ ] Task creation and updates
+### For Consultants & Agencies
+- **Client Onboarding**: Quickly audit new client ClickUp setups
+- **Workflow Analysis**: Identify inefficiencies and optimization opportunities
+- **Automation Planning**: Understand structure before building Make.com/Zapier flows
+- **Documentation**: Auto-generate workspace structure reports
+
+### For Internal Teams
+- **Workspace Cleanup**: Find unused lists, duplicate fields, incomplete configurations
+- **Standardization**: Ensure consistent field naming and structure across spaces
+- **Migration Planning**: Analyze current setup before reorganization
+- **Training**: Understand complex workspace hierarchies
+
+### For Developers
+- **Integration Development**: Explore API structure before building integrations
+- **Data Migration**: Audit source data before migration projects
+- **API Testing**: Validate ClickUp API responses and permissions
+
+## 💰 Monetization & Business Model
+
+This MCP server is **open source (MIT)** and free to use. However, it can be monetized:
+
+### Potential Models
+
+**1. Freemium SaaS**
+- Free tier: 50 API calls/day, basic 5 tools
+- Pro tier ($20/month): Unlimited calls, all 9 tools, priority support
+- Enterprise ($300/month): Multi-workspace, white-label, SLA
+
+**2. Consulting Service**
+- Offer ClickUp audit services using this tool
+- One-time audits: $500-2,000 per client
+- Ongoing optimization: $200-500/month retainer
+
+**3. Agency White-Label**
+- License to agencies for $99-299/month
+- Rebrand and resell to their clients
+- Custom deployment support
+
+**4. FastMCP Cloud Marketplace** (Coming)
+- List on FastMCP Cloud directory
+- Usage-based pricing ($0.01/call)
+- Managed infrastructure
+
+### Current Status
+✅ **Free & open source** - deployed at `https://clickupmcp.zeabur.app/mcp`
+⏳ **Premium tiers** - Coming soon
+🔮 **Enterprise support** - Available on request
+
+## 🐳 Docker Support
+
+Docker is **not currently required** as:
+- ✅ Zeabur natively supports Python
+- ✅ FastMCP Cloud handles deployment automatically
+- ✅ Simple `pip install` for local use
+
+**Add Docker when:**
+- Selling enterprise self-hosted licenses
+- Need multi-tenant isolation
+- Compliance/security requirements mandate containers
+
+See `Dockerfile` (coming soon) for containerized deployment.
+
+## 🗺️ Roadmap
+
+### v1.1 - Enhanced Audit (Planned)
+- [ ] `get_space_tags` - Space-level tag analysis
+- [ ] `get_webhooks` - Existing integrations discovery
+- [ ] `get_goals` - Goals and OKRs support
+- [ ] `get_time_tracking` - Time tracking analytics
+- [ ] `get_members` - Team member permissions
+
+### v1.2 - Write Operations (Planned)
+- [ ] Task creation and bulk updates
 - [ ] Custom field value updates
-- [ ] Task filtering and search
-- [ ] Folder operations
-- [ ] Time tracking
-- [ ] Comments and updates
-- [ ] Webhooks support
+- [ ] Automation management
+
+### v2.0 - AI-Powered Features (Future)
+- [ ] AI-generated optimization recommendations
+- [ ] Automated cleanup suggestions
+- [ ] Workflow pattern recognition
+- [ ] Multi-workspace comparison
+
+See [CHANGELOG.md](CHANGELOG.md) for detailed version history.
+
+## 📜 License
+
+MIT License - see [LICENSE](LICENSE) file for details.
+
+Free for personal and commercial use. Attribution appreciated but not required.
 
 ---
 
-Built with ❤️ using the [Model Context Protocol](https://modelcontextprotocol.io)
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit issues or pull requests.
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines. (Coming soon)
+
+---
+
+Built with ❤️ using [FastMCP](https://gofastmcp.com) and the [Model Context Protocol](https://modelcontextprotocol.io)
+
+**Star ⭐ this repo** if you find it useful!
