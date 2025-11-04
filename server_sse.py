@@ -436,6 +436,377 @@ async def get_folderless_lists(space_id: str, archived: bool = False) -> str:
         return f"Error getting folderless lists: {str(e)}"
 
 
+@mcp.tool()
+async def get_folders(space_id: str, archived: bool = False) -> str:
+    """
+    Get all folders in a ClickUp space with their lists.
+
+    This is the KEY tool for auditing workspace structure. Returns complete
+    folder hierarchy with all lists, task counts, and IDs needed for deeper analysis.
+
+    Args:
+        space_id: The space ID. Get this from get_spaces tool.
+                  Example: "90120012345"
+        archived: Include archived folders. Default: false
+
+    Returns:
+        Markdown formatted folder structure with lists and task counts
+
+    Use this tool to:
+    - Audit complete workspace structure
+    - Find all lists organized in folders
+    - Get list IDs for custom field analysis
+    - See task distribution across lists
+    - Identify organizational patterns
+
+    Example usage:
+        - "Show me all folders in space X"
+        - "Audit the structure of Austin's workspace"
+        - "What lists exist in this space?"
+    """
+    try:
+        params = {"archived": str(archived).lower()}
+        data = await make_api_request(f"/space/{space_id}/folder", params=params)
+        folders = data.get("folders", [])
+
+        if not folders:
+            return "No folders found in this space."
+
+        output = f"# Folders ({len(folders)} total)\n\n"
+
+        total_lists = 0
+        total_tasks = 0
+
+        for folder in folders:
+            folder_name = folder.get('name', 'Unnamed Folder')
+            folder_id = folder.get('id')
+            hidden = folder.get('hidden', False)
+
+            output += f"## 📁 {folder_name}\n"
+            output += f"- **Folder ID**: `{folder_id}`\n"
+            output += f"- **Hidden**: {hidden}\n"
+
+            lists = folder.get('lists', [])
+            if lists:
+                output += f"- **Lists**: {len(lists)}\n\n"
+                for lst in lists:
+                    list_name = lst.get('name', 'Unnamed List')
+                    list_id = lst.get('id')
+                    task_count = lst.get('task_count', 0)
+
+                    total_lists += 1
+                    total_tasks += task_count
+
+                    output += f"   📋 **{list_name}**\n"
+                    output += f"      - List ID: `{list_id}`\n"
+                    output += f"      - Tasks: {task_count}\n"
+                    output += f"      - Archived: {lst.get('archived', False)}\n"
+
+                    if 'folder' in lst:
+                        output += f"      - Folder: {lst['folder'].get('name', 'N/A')}\n"
+                    output += "\n"
+            else:
+                output += "- **Lists**: None\n\n"
+
+        output += f"\n---\n**Summary**: {len(folders)} folders, {total_lists} lists, {total_tasks} total tasks\n"
+
+        return truncate_if_needed(output)
+
+    except Exception as e:
+        return f"Error getting folders: {str(e)}"
+
+
+@mcp.tool()
+async def get_list_details(list_id: str) -> str:
+    """
+    Get detailed information about a specific list including all custom fields.
+
+    This tool provides comprehensive list analysis including structure, fields,
+    statuses, and configuration - essential for workflow audit.
+
+    Args:
+        list_id: The list ID. Get this from get_folders or get_space_details.
+                 Example: "901200567890"
+
+    Returns:
+        Markdown formatted detailed list information with custom fields
+
+    Use this tool to:
+    - Audit list configuration and custom fields
+    - Understand data structure for each list
+    - See available statuses and priorities
+    - Check assignees and permissions
+    - Prepare for automation recommendations
+
+    Example usage:
+        - "Show me details for Lead Tracker list"
+        - "What fields are in list 901111375515?"
+        - "Audit the structure of this list"
+    """
+    try:
+        data = await make_api_request(f"/list/{list_id}")
+
+        output = f"# List: {data.get('name', 'Unnamed')}\n\n"
+        output += f"**ID**: `{data.get('id')}`\n"
+        output += f"**Archived**: {data.get('archived', False)}\n"
+        output += f"**Task Count**: {data.get('task_count', 0)}\n"
+
+        # Folder context
+        if 'folder' in data:
+            folder = data['folder']
+            output += f"**Folder**: {folder.get('name')} (ID: `{folder.get('id')}`)\n"
+
+        # Space context
+        if 'space' in data:
+            space = data['space']
+            output += f"**Space**: {space.get('name')} (ID: `{space.get('id')}`)\n"
+
+        output += "\n"
+
+        # Statuses
+        if 'statuses' in data:
+            statuses = data['statuses']
+            output += f"## Statuses ({len(statuses)} total)\n\n"
+            for status in statuses:
+                status_name = status.get('status', 'Unknown')
+                status_type = status.get('type', 'N/A')
+                color = status.get('color', 'N/A')
+                output += f"- **{status_name}** (Type: {status_type}, Color: {color})\n"
+            output += "\n"
+
+        # Priority
+        if 'priority' in data:
+            priority = data['priority']
+            if priority:
+                output += f"## Priority\n\n"
+                output += f"**Enabled**: {priority.get('enabled', False)}\n"
+                if 'priorities' in priority:
+                    for p in priority['priorities']:
+                        output += f"- {p.get('priority')} (Color: {p.get('color')})\n"
+                output += "\n"
+
+        # Due dates
+        if 'due_date_time' in data:
+            output += f"**Due Dates**: {data.get('due_date_time', False)}\n"
+
+        # Assignees
+        if 'assignees' in data:
+            assignees = data['assignees']
+            if assignees:
+                output += f"\n## Assignees ({len(assignees)} total)\n\n"
+                for assignee in assignees:
+                    output += f"- {assignee.get('username', 'N/A')} (ID: {assignee.get('id')})\n"
+                output += "\n"
+
+        # Get custom fields for this list
+        try:
+            fields_data = await make_api_request(f"/list/{list_id}/field")
+            fields = fields_data.get("fields", [])
+
+            if fields:
+                output += f"## Custom Fields ({len(fields)} total)\n\n"
+                for field in fields:
+                    output += f"### {field.get('name', 'Unnamed')}\n"
+                    output += f"- **ID**: `{field.get('id')}`\n"
+                    output += f"- **Type**: {field.get('type', 'unknown')}\n"
+                    output += f"- **Required**: {field.get('required', False)}\n"
+
+                    # Type-specific config
+                    type_config = field.get('type_config', {})
+                    if type_config:
+                        output += "- **Config**:\n"
+                        for key, value in list(type_config.items())[:5]:  # Limit config details
+                            output += f"  - {key}: {value}\n"
+                    output += "\n"
+        except Exception:
+            output += "\n*Custom fields: Unable to retrieve*\n"
+
+        return truncate_if_needed(output)
+
+    except Exception as e:
+        return f"Error getting list details: {str(e)}"
+
+
+@mcp.tool()
+async def get_tasks(list_id: str, page: int = 0, limit: int = 10) -> str:
+    """
+    Get sample tasks from a list to understand data structure and usage patterns.
+
+    Use this to see real examples of how the list is being used, what data
+    is being tracked, and how custom fields are filled out.
+
+    Args:
+        list_id: The list ID. Get from get_folders or get_list_details.
+                 Example: "901200567890"
+        page: Page number for pagination (0-indexed). Default: 0
+        limit: Number of tasks to return (1-100). Default: 10
+
+    Returns:
+        Markdown formatted task information with custom field values
+
+    Use this tool to:
+    - See real data examples from lists
+    - Understand how custom fields are used
+    - Analyze data quality and completeness
+    - Identify patterns for automation
+    - Get insights for recommendations
+
+    Example usage:
+        - "Show me sample tasks from Lead Tracker"
+        - "What data is in the first 5 tasks of this list?"
+        - "Analyze task structure in list X"
+    """
+    try:
+        params = {
+            "page": page,
+            "order_by": "created",
+            "reverse": "true",
+            "subtasks": "false",
+            "include_closed": "true"
+        }
+
+        data = await make_api_request(f"/list/{list_id}/task", params=params)
+        tasks = data.get("tasks", [])
+
+        if not tasks:
+            return f"No tasks found in list {list_id}"
+
+        # Get list info for context
+        list_data = await make_api_request(f"/list/{list_id}")
+        list_name = list_data.get('name', 'Unknown List')
+
+        output = f"# Tasks from: {list_name}\n\n"
+        output += f"**Showing {min(limit, len(tasks))} of {len(tasks)} tasks**\n\n"
+
+        for i, task in enumerate(tasks[:limit], 1):
+            task_name = task.get('name', 'Unnamed Task')
+            task_id = task.get('id')
+            status = task.get('status', {}).get('status', 'No Status')
+
+            output += f"## {i}. {task_name}\n"
+            output += f"- **Task ID**: `{task_id}`\n"
+            output += f"- **Status**: {status}\n"
+            output += f"- **Created**: {task.get('date_created', 'N/A')}\n"
+
+            # Priority
+            if 'priority' in task and task['priority']:
+                priority = task['priority']
+                output += f"- **Priority**: {priority.get('priority', 'N/A')}\n"
+
+            # Due date
+            if 'due_date' in task and task['due_date']:
+                output += f"- **Due Date**: {task['due_date']}\n"
+
+            # Assignees
+            assignees = task.get('assignees', [])
+            if assignees:
+                assignee_names = [a.get('username', 'N/A') for a in assignees[:3]]
+                output += f"- **Assignees**: {', '.join(assignee_names)}\n"
+
+            # Custom fields with values
+            custom_fields = task.get('custom_fields', [])
+            if custom_fields:
+                output += "- **Custom Fields**:\n"
+                for field in custom_fields[:5]:  # Limit to 5 fields per task
+                    field_name = field.get('name', 'Unknown')
+                    field_value = field.get('value', 'Empty')
+
+                    # Format value based on type
+                    if isinstance(field_value, dict):
+                        field_value = str(field_value)[:50]
+                    elif isinstance(field_value, list):
+                        field_value = f"[{len(field_value)} items]"
+
+                    output += f"  - {field_name}: {field_value}\n"
+
+            # Description preview
+            if 'description' in task and task['description']:
+                desc = task['description'][:100].replace('\n', ' ')
+                output += f"- **Description**: {desc}...\n"
+
+            output += "\n"
+
+        return truncate_if_needed(output)
+
+    except Exception as e:
+        return f"Error getting tasks: {str(e)}"
+
+
+@mcp.tool()
+async def get_views(space_id: str) -> str:
+    """
+    Get all views (including dashboards) in a space.
+
+    Views include Board, List, Calendar, Gantt, and Dashboard views.
+    This helps understand how the client visualizes and organizes their data.
+
+    Args:
+        space_id: The space ID. Get from get_spaces tool.
+                  Example: "90120012345"
+
+    Returns:
+        Markdown formatted list of views with their types and configurations
+
+    Use this tool to:
+    - Discover existing dashboards and views
+    - Understand data visualization preferences
+    - Identify reporting patterns
+    - Plan dashboard improvements
+
+    Example usage:
+        - "What views exist in this space?"
+        - "Show me the dashboards"
+        - "List all views in Austin's workspace"
+    """
+    try:
+        data = await make_api_request(f"/space/{space_id}/view")
+        views = data.get("views", [])
+
+        if not views:
+            return "No views found in this space."
+
+        output = f"# Views ({len(views)} total)\n\n"
+
+        # Group by type
+        view_types = {}
+        for view in views:
+            view_type = view.get('type', 'unknown')
+            if view_type not in view_types:
+                view_types[view_type] = []
+            view_types[view_type].append(view)
+
+        for view_type, type_views in view_types.items():
+            output += f"## {view_type.title()} Views ({len(type_views)})\n\n"
+
+            for view in type_views:
+                view_name = view.get('name', 'Unnamed View')
+                view_id = view.get('id')
+
+                output += f"### {view_name}\n"
+                output += f"- **View ID**: `{view_id}`\n"
+                output += f"- **Type**: {view_type}\n"
+
+                # Protected/private
+                if 'protected' in view:
+                    output += f"- **Protected**: {view.get('protected', False)}\n"
+
+                # Parent info
+                if 'parent' in view:
+                    parent = view['parent']
+                    output += f"- **Parent**: {parent.get('name', 'N/A')} (ID: {parent.get('id')})\n"
+
+                # Settings preview
+                if 'settings' in view and view['settings']:
+                    output += f"- **Configured**: Yes\n"
+
+                output += "\n"
+
+        return truncate_if_needed(output)
+
+    except Exception as e:
+        return f"Error getting views: {str(e)}"
+
+
 # Run with HTTP Stream transport (SSE is deprecated since 2025-03-26)
 if __name__ == "__main__":
     port = int(os.getenv("PORT", "8000"))
