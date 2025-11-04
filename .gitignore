@@ -41,3 +41,9 @@ Thumbs.db
 # Logs
 *.log
 checklist.txt
+
+# Private business materials
+private/
+MONETIZATION.md
+SPONSOR_TIERS.md
+PROMOTION.md
