@@ -1,8 +1,10 @@
 """
-ClickUp MCP Server with SSE Transport
+ClickUp MCP Server with HTTP Stream Transport
 
-A Model Context Protocol server with SSE transport for remote deployment.
+A Model Context Protocol server with HTTP Stream transport for remote deployment.
 Designed to work with Web Claude and can be deployed on platforms like Zeabur.
+
+Endpoint: /mcp
 """
 
 import os
@@ -434,11 +436,10 @@ async def get_folderless_lists(space_id: str, archived: bool = False) -> str:
         return f"Error getting folderless lists: {str(e)}"
 
 
-# Run with uvicorn for SSE transport
+# Run with HTTP Stream transport (SSE is deprecated since 2025-03-26)
 if __name__ == "__main__":
-    import uvicorn
-
     port = int(os.getenv("PORT", "8000"))
 
-    # FastMCP automatically handles SSE transport
-    mcp.run(transport="sse", port=port, host="0.0.0.0")
+    # FastMCP with streamable-http transport (recommended for 2025)
+    # Endpoint will be available at: http://host:port/mcp
+    mcp.run(transport="streamable-http", port=port, host="0.0.0.0")

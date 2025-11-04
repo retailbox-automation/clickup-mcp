@@ -32,12 +32,12 @@
 ### Шаг 5: Получи URL деплоя
 1. В интерфейсе Zeabur найди раздел **"Domains"**
 2. Zeabur автоматически создаст домен типа: `your-app-xxxxx.zeabur.app`
-3. Твой MCP endpoint будет: `https://your-app-xxxxx.zeabur.app/mcp/v1/messages`
+3. Твой MCP endpoint будет: `https://your-app-xxxxx.zeabur.app/mcp`
 
 ### Шаг 6: Проверь работоспособность
-Открой в браузере: `https://your-app-xxxxx.zeabur.app/health`
+Попробуй открыть endpoint в браузере: `https://your-app-xxxxx.zeabur.app/mcp`
 
-Должно вернуться: `OK`
+Должен вернуться JSON с информацией о сервере или ошибка подключения (это нормально для браузера)
 
 ---
 
@@ -50,11 +50,12 @@
    ```json
    {
      "clickup": {
-       "url": "https://your-app-xxxxx.zeabur.app/mcp/v1/messages",
-       "transport": "sse"
+       "url": "https://your-app-xxxxx.zeabur.app/mcp"
      }
    }
    ```
+
+   **Примечание**: Не указывай `transport`, Claude автоматически определит HTTP Stream
 5. Сохрани и перезагрузи страницу
 
 ---

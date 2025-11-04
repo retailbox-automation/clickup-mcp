@@ -51,7 +51,7 @@ Deploy as a remote server using SSE transport. Perfect for Zeabur, Railway, or s
 
 5. **Get your deployment URL**
    - Zeabur will provide a URL like `https://your-app.zeabur.app`
-   - Your MCP endpoint will be: `https://your-app.zeabur.app/mcp/v1/messages`
+   - Your MCP endpoint will be: `https://your-app.zeabur.app/mcp`
 
 #### Connect to Web Claude
 
@@ -62,12 +62,13 @@ Deploy as a remote server using SSE transport. Perfect for Zeabur, Railway, or s
    {
      "mcpServers": {
        "clickup": {
-         "url": "https://your-app.zeabur.app/mcp/v1/messages",
-         "transport": "sse"
+         "url": "https://your-app.zeabur.app/mcp"
        }
      }
    }
    ```
+
+   **Note**: No need to specify `transport`, Claude will auto-detect HTTP Stream
 
 ### Option 2: Local Server (stdio transport)
 
